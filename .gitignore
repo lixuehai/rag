@@ -1,1 +1,3 @@
 LLM.faiss
+.env
+__pycache__

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with AI</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; }
+        .chat-container { border: 1px solid #ccc; padding: 10px; max-height: 500px; overflow-y: auto; margin-bottom: 10px; }
+        .message { margin: 5px 0; }
+        .user { color: blue; }
+        .assistant { color: green; }
+    </style>
+</head>
+<body>
+    <h1>AI Chat</h1>
+    <div class="chat-container" id="chat-container">
+        {% for msg in chat_history %}
+            <div class="message {{ msg['role'] }}">
+                <strong>{{ 'User' if msg['role'] == 'user' else 'Assistant' }}:</strong> {{ msg['content'] }}
+            </div>
+        {% endfor %}
+    </div>
+    <form id="chat-form" action="/chat" method="post" onsubmit="sendMessage(event)">
+        <input type="text" id="query" name="query" placeholder="Type your message here..." required>
+        <button type="submit">Send</button>
+    </form>
+    <script>
+        async function sendMessage(event) {
+            event.preventDefault();
+            const query = document.getElementById("query").value;
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query, chat_history: Array.from(document.querySelectorAll('.message')).map(el => ({
+                    role: el.classList.contains('user') ? 'user' : 'assistant',
+                    content: el.textContent.replace('User: ', '').replace('Assistant: ', '')
+                })) })
+            });
+            const data = await response.json();
+            updateChat(data.chat_history);
+            document.getElementById("query").value = "";
+        }
+        function updateChat(chat_history) {
+            const chatContainer = document.getElementById("chat-container");
+            chatContainer.innerHTML = chat_history.map(msg =>
+                `<div class="message ${msg.role}">
+                    <strong>${msg.role === 'user' ? 'User' : 'Assistant'}:</strong> ${msg.content}
+                </div>`
+            ).join('');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
+
